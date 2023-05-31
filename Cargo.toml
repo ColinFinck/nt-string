@@ -1,0 +1,28 @@
+[package]
+name = "nt-string"
+version = "0.1.0"
+authors = ["Colin Finck <colin@reactos.org>"]
+description = "Idiomatic Rust implementations for various Windows string types"
+homepage = "https://github.com/ColinFinck/nt-string"
+repository = "https://github.com/ColinFinck/nt-string"
+documentation = "https://docs.rs/nt-string"
+readme = "../README.md"
+edition = "2021"
+rust-version = "1.58"
+license = "MIT OR Apache-2.0"
+keywords = ["wide", "string", "nt", "utf-16", "windows"]
+categories = ["development-tools::ffi", "encoding", "no-std", "os::windows-apis"]
+
+[dependencies]
+displaydoc = { version = "0.2.3", default-features = false }
+widestring = { version = "1.0.2", default-features = false }
+
+[features]
+default = ["std"]
+alloc = ["widestring/alloc"]
+allocator_api = []
+std = ["alloc"]
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
