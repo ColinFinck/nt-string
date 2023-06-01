@@ -10,7 +10,7 @@
 
 Provides idiomatic Rust implementations for various Windows string types:
 
-* [`NtUnicodeString`](https://docs.rs/nt-string/latest/nt_string/unicode_string/struct.NtUnicodeString.html) (with [`NtUnicodeStr`](https://docs.rs/nt-string/latest/nt_string/unicode_string/ct.NtUnicodeStr.html) and [`NtUnicodeStrMut`](https://docs.rs/nt-string/latest/nt_string/unicode_string/struct.NtUnicodeStrMut.html)):
+* [`NtUnicodeString`](https://docs.rs/nt-string/latest/nt_string/unicode_string/struct.NtUnicodeString.html) (with [`NtUnicodeStr`](https://docs.rs/nt-string/latest/nt_string/unicode_string/struct.NtUnicodeStr.html) and [`NtUnicodeStrMut`](https://docs.rs/nt-string/latest/nt_string/unicode_string/struct.NtUnicodeStrMut.html)):
   For interfacing with the Windows kernel string type known as [`UNICODE_STRING`](https://learn.microsoft.com/windows/win32/api/ntdef/ns-ntdef-_unicode_string)
 * [`U16StrLe`](https://docs.rs/nt-string/latest/nt_string/u16strle/struct.U16StrLe.html):
   For working with byte slices of UTF-16 (little-endian) strings
