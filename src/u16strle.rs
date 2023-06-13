@@ -65,7 +65,11 @@ impl<'a> U16StrLe<'a> {
         U16String::from_vec(self.u16_iter().collect::<Vec<u16>>())
     }
 
-    fn u16_iter(&'a self) -> impl Iterator<Item = u16> + 'a {
+    /// Returns an iterator over the [`u16`] codepoints of this string.
+    ///
+    /// The codepoints may or may not be valid UTF-16 codepoints.
+    /// This function does not validate them.
+    pub fn u16_iter(&'a self) -> impl Iterator<Item = u16> + 'a {
         self.0
             .chunks_exact(2)
             .map(|two_bytes| u16::from_le_bytes(two_bytes.try_into().unwrap()))
