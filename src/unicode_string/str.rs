@@ -10,7 +10,9 @@ use core::{fmt, mem, slice};
 use widestring::{U16CStr, U16Str};
 
 use crate::error::{NtStringError, Result};
-use crate::helpers::{cmp_iter, RawNtString};
+use crate::helpers::{
+    check_from_u16, check_from_u16_cstr, check_from_u16_until_nul, cmp_iter, RawNtString,
+};
 
 use super::iter::{Chars, CharsLossy};
 
@@ -158,12 +160,7 @@ impl<'a> NtUnicodeStr<'a> {
     ///
     /// [`try_from_u16_until_nul`]: Self::try_from_u16_until_nul
     pub fn try_from_u16(buffer: &'a [u16]) -> Result<Self> {
-        let elements = buffer.len();
-        let length_usize = elements
-            .checked_mul(mem::size_of::<u16>())
-            .ok_or(NtStringError::BufferSizeExceedsU16)?;
-        let length =
-            u16::try_from(length_usize).map_err(|_| NtStringError::BufferSizeExceedsU16)?;
+        let length = check_from_u16(buffer)?;
 
         Ok(Self {
             raw: RawNtString {
@@ -191,26 +188,7 @@ impl<'a> NtUnicodeStr<'a> {
     ///
     /// [`try_from_u16`]: Self::try_from_u16
     pub fn try_from_u16_until_nul(buffer: &'a [u16]) -> Result<Self> {
-        let length;
-        let maximum_length;
-
-        match buffer.iter().position(|x| *x == 0) {
-            Some(nul_pos) => {
-                // Include the terminating NUL character in `maximum_length` ...
-                let maximum_elements = nul_pos
-                    .checked_add(1)
-                    .ok_or(NtStringError::BufferSizeExceedsU16)?;
-                let maximum_length_usize = maximum_elements
-                    .checked_mul(mem::size_of::<u16>())
-                    .ok_or(NtStringError::BufferSizeExceedsU16)?;
-                maximum_length = u16::try_from(maximum_length_usize)
-                    .map_err(|_| NtStringError::BufferSizeExceedsU16)?;
-
-                // ... but not in `length`
-                length = maximum_length - mem::size_of::<u16>() as u16;
-            }
-            None => return Err(NtStringError::NulNotFound),
-        };
+        let (length, maximum_length) = check_from_u16_until_nul(buffer)?;
 
         Ok(Self {
             raw: RawNtString {
@@ -314,25 +292,13 @@ impl<'a> TryFrom<&'a U16CStr> for NtUnicodeStr<'a> {
     /// The internal buffer will be NUL-terminated.
     /// See the [module-level documentation](super) for the implications of that.
     fn try_from(value: &'a U16CStr) -> Result<Self> {
-        let buffer = value.as_slice_with_nul();
-
-        // Include the terminating NUL character in `maximum_length` ...
-        let maximum_length_in_elements = buffer.len();
-        let maximum_length_in_bytes = maximum_length_in_elements
-            .checked_mul(mem::size_of::<u16>())
-            .ok_or(NtStringError::BufferSizeExceedsU16)?;
-        let maximum_length = u16::try_from(maximum_length_in_bytes)
-            .map_err(|_| NtStringError::BufferSizeExceedsU16)?;
-
-        // ... but not in `length`
-        debug_assert!(maximum_length >= mem::size_of::<u16>() as u16);
-        let length = maximum_length - mem::size_of::<u16>() as u16;
+        let (length, maximum_length) = check_from_u16_cstr(value)?;
 
         Ok(Self {
             raw: RawNtString {
                 length,
                 maximum_length,
-                buffer: buffer.as_ptr(),
+                buffer: value.as_ptr(),
             },
             _lifetime: PhantomData,
         })
