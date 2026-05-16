@@ -1,4 +1,4 @@
-// Copyright 2023 Colin Finck <colin@reactos.org>
+// Copyright 2023-2026 Colin Finck <colin@reactos.org>
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use core::cmp::Ordering;
@@ -122,14 +122,16 @@ impl<'a> NtUnicodeStrMut<'a> {
     ///
     /// [`try_from_u16_until_nul`]: Self::try_from_u16_until_nul
     pub fn try_from_u16(buffer: &mut [u16]) -> Result<Self> {
-        let unicode_str = NtUnicodeStr::try_from_u16(buffer)?;
+        let length = NtUnicodeStr::try_length_from_u16(buffer)?;
 
-        // SAFETY: `unicode_str` was created from a mutable `buffer` and
-        // `NtUnicodeStr` and `NtUnicodeStrMut` have the same memory layout,
-        // so we can safely transmute `NtUnicodeStr` to `NtUnicodeStrMut`.
-        let unicode_str_mut = unsafe { mem::transmute(unicode_str) };
-
-        Ok(unicode_str_mut)
+        Ok(Self {
+            raw: RawNtString {
+                length,
+                maximum_length: length,
+                buffer: buffer.as_mut_ptr(),
+            },
+            _lifetime: PhantomData,
+        })
     }
 
     /// Creates an [`NtUnicodeStrMut`] from an existing [`u16`] string buffer that contains at least one NUL character.
@@ -148,14 +150,16 @@ impl<'a> NtUnicodeStrMut<'a> {
     ///
     /// [`try_from_u16`]: Self::try_from_u16
     pub fn try_from_u16_until_nul(buffer: &mut [u16]) -> Result<Self> {
-        let unicode_str = NtUnicodeStr::try_from_u16_until_nul(buffer)?;
+        let (length, maximum_length) = NtUnicodeStr::try_length_from_u16_until_nul(buffer)?;
 
-        // SAFETY: `unicode_str` was created from a mutable `buffer` and
-        // `NtUnicodeStr` and `NtUnicodeStrMut` have the same memory layout,
-        // so we can safely transmute `NtUnicodeStr` to `NtUnicodeStrMut`.
-        let unicode_str_mut = unsafe { mem::transmute(unicode_str) };
-
-        Ok(unicode_str_mut)
+        Ok(Self {
+            raw: RawNtString {
+                length,
+                maximum_length,
+                buffer: buffer.as_mut_ptr(),
+            },
+            _lifetime: PhantomData,
+        })
     }
 }
 
@@ -192,14 +196,16 @@ impl<'a> TryFrom<&'a mut U16CStr> for NtUnicodeStrMut<'a> {
     /// The internal buffer will be NUL-terminated.
     /// See the [module-level documentation](super) for the implications of that.
     fn try_from(value: &'a mut U16CStr) -> Result<Self> {
-        let unicode_str = NtUnicodeStr::try_from(&*value)?;
+        let (length, maximum_length) = NtUnicodeStr::try_length_from_u16_cstr(value)?;
 
-        // SAFETY: `unicode_str` was created from a mutable `value` and
-        // `NtUnicodeStr` and `NtUnicodeStrMut` have the same memory layout,
-        // so we can safely transmute `NtUnicodeStr` to `NtUnicodeStrMut`.
-        let unicode_str_mut = unsafe { mem::transmute(unicode_str) };
-
-        Ok(unicode_str_mut)
+        Ok(Self {
+            raw: RawNtString {
+                length,
+                maximum_length,
+                buffer: value.as_mut_ptr(),
+            },
+            _lifetime: PhantomData,
+        })
     }
 }
 
