@@ -1,4 +1,4 @@
-// Copyright 2023 Colin Finck <colin@reactos.org>
+// Copyright 2023-2026 Colin Finck <colin@reactos.org>
 // SPDX-License-Identifier: MIT OR Apache-2.0
 //
 //! Provides idiomatic Rust implementations for various Windows string types:
@@ -33,7 +33,6 @@ pub use error::*;
 mod helpers;
 
 mod macros;
-pub use macros::*;
 
 pub mod traits;
 pub mod u16strle;

@@ -44,7 +44,7 @@ impl<'a> NtUnicodeStrMut<'a> {
     }
 
     /// Returns an immutable [`NtUnicodeStr`] reference for this string.
-    pub fn as_unicode_str(&'a self) -> &NtUnicodeStr<'a> {
+    pub fn as_unicode_str(&'a self) -> &'a NtUnicodeStr<'a> {
         self.deref()
     }
 
@@ -95,7 +95,7 @@ impl<'a> NtUnicodeStrMut<'a> {
     ///
     /// [`NtStringError::UnpairedUtf16Surrogate`]: crate::error::NtStringError::UnpairedUtf16Surrogate
     pub fn pop(&mut self) -> Option<Result<char>> {
-        match self.chars().rev().next()? {
+        match self.chars().next_back()? {
             Ok(c) => {
                 self.raw.length -= (c.len_utf16() * mem::size_of::<u16>()) as u16;
                 Some(Ok(c))

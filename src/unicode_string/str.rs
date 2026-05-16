@@ -62,7 +62,7 @@ impl<'a> NtUnicodeStr<'a> {
     /// If you would like a lossy iterator over [`char`]s directly, use [`chars_lossy`] instead.
     ///
     /// [`chars_lossy`]: Self::chars_lossy
-    pub fn chars(&self) -> Chars {
+    pub fn chars(&self) -> Chars<'_> {
         Chars::new(self)
     }
 
@@ -74,7 +74,7 @@ impl<'a> NtUnicodeStr<'a> {
     ///
     /// [`chars`]: Self::chars
     /// [`U+FFFD REPLACEMENT CHARACTER`]: std::char::REPLACEMENT_CHARACTER
-    pub fn chars_lossy(&self) -> CharsLossy {
+    pub fn chars_lossy(&self) -> CharsLossy<'_> {
         CharsLossy::new(self)
     }
 

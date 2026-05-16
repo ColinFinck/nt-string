@@ -1,4 +1,4 @@
-// Copyright 2023 Colin Finck <colin@reactos.org>
+// Copyright 2023-2026 Colin Finck <colin@reactos.org>
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use ::alloc::alloc::{self, Layout};
@@ -483,6 +483,12 @@ impl Ord for NtUnicodeString {
     }
 }
 
+impl PartialOrd<NtUnicodeString> for NtUnicodeString {
+    fn partial_cmp(&self, other: &NtUnicodeString) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
 impl_eq! { NtUnicodeString, NtUnicodeString }
 impl_eq! { NtUnicodeStr<'a>, NtUnicodeString }
 impl_eq! { NtUnicodeString, NtUnicodeStr<'a> }
@@ -493,7 +499,6 @@ impl_eq! { str, NtUnicodeString }
 impl_eq! { NtUnicodeString, &str }
 impl_eq! { &str, NtUnicodeString }
 
-impl_partial_cmp! { NtUnicodeString, NtUnicodeString }
 impl_partial_cmp! { NtUnicodeStr<'a>, NtUnicodeString }
 impl_partial_cmp! { NtUnicodeString, NtUnicodeStr<'a> }
 impl_partial_cmp! { NtUnicodeStrMut<'a>, NtUnicodeString }
