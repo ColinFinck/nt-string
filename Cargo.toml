@@ -1,6 +1,6 @@
 [package]
 name = "nt-string"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["Colin Finck <colin@reactos.org>"]
 description = "Idiomatic Rust implementations for various Windows string types"
 homepage = "https://github.com/ColinFinck/nt-string"

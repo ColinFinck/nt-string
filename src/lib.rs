@@ -19,6 +19,7 @@
 //! [`widestring`]: https://crates.io/crates/widestring
 
 #![cfg_attr(not(feature = "std"), no_std)]
+#![doc(html_logo_url = "https://colinfinck.de/img/software/nt-string.svg")]
 #![cfg_attr(docsrs, feature(doc_cfg))]
 #![warn(missing_docs)]
 
