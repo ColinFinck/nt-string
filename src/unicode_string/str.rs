@@ -1,4 +1,4 @@
-// Copyright 2023 Colin Finck <colin@reactos.org>
+// Copyright 2023-2026 Colin Finck <colin@reactos.org>
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 use core::cmp::Ordering;
@@ -10,9 +10,7 @@ use core::{fmt, mem, slice};
 use widestring::{U16CStr, U16Str};
 
 use crate::error::{NtStringError, Result};
-use crate::helpers::{
-    check_from_u16, check_from_u16_cstr, check_from_u16_until_nul, cmp_iter, RawNtString,
-};
+use crate::helpers::{cmp_iter, RawNtString};
 
 use super::iter::{Chars, CharsLossy};
 
@@ -160,7 +158,7 @@ impl<'a> NtUnicodeStr<'a> {
     ///
     /// [`try_from_u16_until_nul`]: Self::try_from_u16_until_nul
     pub fn try_from_u16(buffer: &'a [u16]) -> Result<Self> {
-        let length = check_from_u16(buffer)?;
+        let length = Self::try_length_from_u16(buffer)?;
 
         Ok(Self {
             raw: RawNtString {
@@ -188,7 +186,7 @@ impl<'a> NtUnicodeStr<'a> {
     ///
     /// [`try_from_u16`]: Self::try_from_u16
     pub fn try_from_u16_until_nul(buffer: &'a [u16]) -> Result<Self> {
-        let (length, maximum_length) = check_from_u16_until_nul(buffer)?;
+        let (length, maximum_length) = Self::try_length_from_u16_until_nul(buffer)?;
 
         Ok(Self {
             raw: RawNtString {
@@ -198,6 +196,57 @@ impl<'a> NtUnicodeStr<'a> {
             },
             _lifetime: PhantomData,
         })
+    }
+
+    pub(crate) fn try_length_from_u16(buffer: &[u16]) -> Result<u16> {
+        let elements = buffer.len();
+        let length_usize = elements
+            .checked_mul(mem::size_of::<u16>())
+            .ok_or(NtStringError::BufferSizeExceedsU16)?;
+        let length =
+            u16::try_from(length_usize).map_err(|_| NtStringError::BufferSizeExceedsU16)?;
+
+        Ok(length)
+    }
+
+    pub(crate) fn try_length_from_u16_cstr(u16cstr: &U16CStr) -> Result<(u16, u16)> {
+        let buffer = u16cstr.as_slice_with_nul();
+
+        // Include the terminating NUL character in `maximum_length` ...
+        let maximum_length_in_elements = buffer.len();
+        let maximum_length_in_bytes = maximum_length_in_elements
+            .checked_mul(mem::size_of::<u16>())
+            .ok_or(NtStringError::BufferSizeExceedsU16)?;
+        let maximum_length = u16::try_from(maximum_length_in_bytes)
+            .map_err(|_| NtStringError::BufferSizeExceedsU16)?;
+
+        // ... but not in `length`
+        debug_assert!(maximum_length >= mem::size_of::<u16>() as u16);
+        let length = maximum_length - mem::size_of::<u16>() as u16;
+
+        Ok((length, maximum_length))
+    }
+
+    pub(crate) fn try_length_from_u16_until_nul(buffer: &[u16]) -> Result<(u16, u16)> {
+        match buffer.iter().position(|x| *x == 0) {
+            Some(nul_pos) => {
+                // Include the terminating NUL character in `maximum_length` ...
+                let maximum_elements = nul_pos
+                    .checked_add(1)
+                    .ok_or(NtStringError::BufferSizeExceedsU16)?;
+                let maximum_length_usize = maximum_elements
+                    .checked_mul(mem::size_of::<u16>())
+                    .ok_or(NtStringError::BufferSizeExceedsU16)?;
+                let maximum_length = u16::try_from(maximum_length_usize)
+                    .map_err(|_| NtStringError::BufferSizeExceedsU16)?;
+
+                // ... but not in `length`
+                let length = maximum_length - mem::size_of::<u16>() as u16;
+
+                Ok((length, maximum_length))
+            }
+            None => Err(NtStringError::NulNotFound),
+        }
     }
 
     pub(crate) fn u16_iter(&'a self) -> Copied<Iter<'a, u16>> {
@@ -292,7 +341,7 @@ impl<'a> TryFrom<&'a U16CStr> for NtUnicodeStr<'a> {
     /// The internal buffer will be NUL-terminated.
     /// See the [module-level documentation](super) for the implications of that.
     fn try_from(value: &'a U16CStr) -> Result<Self> {
-        let (length, maximum_length) = check_from_u16_cstr(value)?;
+        let (length, maximum_length) = Self::try_length_from_u16_cstr(value)?;
 
         Ok(Self {
             raw: RawNtString {
