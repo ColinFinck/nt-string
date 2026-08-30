@@ -33,7 +33,11 @@ impl<'a> NtUnicodeStr<'a> {
 
     /// Returns a slice to the raw [`u16`] codepoints of the string.
     pub fn as_slice(&self) -> &'a [u16] {
-        unsafe { slice::from_raw_parts(self.raw.buffer, self.len_in_elements()) }
+        if self.raw.buffer.is_null() {
+            &[]
+        } else {
+            unsafe { slice::from_raw_parts(self.raw.buffer, self.len_in_elements()) }
+        }
     }
 
     /// Returns a [`U16Str`] reference for this string.

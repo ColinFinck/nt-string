@@ -33,7 +33,12 @@ impl<'a> NtUnicodeStrMut<'a> {
 
     /// Returns a mutable slice to the raw `u16` codepoints of the string.
     pub fn as_mut_slice(&mut self) -> &'a mut [u16] {
-        unsafe { slice::from_raw_parts_mut(self.raw.buffer, self.len_in_elements()) }
+        if self.raw.buffer.is_null() {
+            &mut []
+        }
+        else {
+            unsafe { slice::from_raw_parts_mut(self.raw.buffer, self.len_in_elements()) }
+        }
     }
 
     /// Returns a mutable [`U16Str`] reference for this string.
